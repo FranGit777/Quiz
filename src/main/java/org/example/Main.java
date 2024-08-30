@@ -1,19 +1,60 @@
 package org.example;
 
-//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
-// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 public class Main {
     public static void main(String[] args) {
-        Pregunta[] preguntas = {
-                new Pregunta("¿Cuál es la frase mitica de Bananirou? El salto del...", new String[]{"Creeper", "Papu", "Acuaman", "Tigre"}, 1),
-                new Pregunta("¿Quien se encarga del lanzacuetes Dave?", new String[]{"El hongo recontra enojado", "El zapallo enojado", "La estrella", "El cactus"}, 1),
-                new Pregunta("¿Cuantos pelos tiene el Papu?", new String[]{"1", "Muchos", "0", "Usa peluca"}, 2),
-                new Pregunta("¿Cual es el mayor hit de Banatroll?", new String[]{"Kuleando Narkos", "Camarada Comisario", "El rap del Outlas", "California"}, 3),
-                new Pregunta("¿Cual es el juego favorito del Papu?", new String[]{"CsGo", "Outlas", "Lol", "Gta SA"}, 2),
+        List<Pregunta> preguntas = cargarPreguntasDesdeArchivo("Pregunta.txt");
 
-        };
+        if (preguntas != null) {
+            Quiz quiz = new Quiz(preguntas.toArray(new Pregunta[0]));
+            quiz.empezar();
+        }
+    }
 
-        Quiz quiz = new Quiz(preguntas);
-        quiz.empezar();
+    private static List<Pregunta> cargarPreguntasDesdeArchivo(String archivo) {
+        List<Pregunta> preguntas = new ArrayList<>();
+        try (BufferedReader br = new BufferedReader(new FileReader(archivo))) {
+            String linea;
+            while ((linea = br.readLine()) != null) {
+                // Leer la pregunta
+                String textoPregunta = linea.trim();
+                if (textoPregunta.isEmpty()) continue;
+
+                // Leer las respuestas
+                String[] respuestas = new String[4];
+                for (int i = 0; i < respuestas.length; i++) {
+                    String respuesta = br.readLine();
+                    if (respuesta == null) {
+                        throw new IOException("No se encontraron suficientes respuestas para la pregunta: " + textoPregunta);
+                    }
+                    respuestas[i] = respuesta.trim();
+                }
+
+                // Leer la respuesta correcta (índice basado en 1)
+                String respuestaCorrectaStr = br.readLine();
+                if (respuestaCorrectaStr == null) {
+                    throw new IOException("Falta el índice de la respuesta correcta para la pregunta: " + textoPregunta);
+                }
+                respuestaCorrectaStr = respuestaCorrectaStr.trim();
+                int respuestaCorrectaIndex;
+                try {
+                    respuestaCorrectaIndex = Integer.parseInt(respuestaCorrectaStr) - 1;
+                } catch (NumberFormatException e) {
+                    System.err.println("Índice de respuesta incorrecto: " + respuestaCorrectaStr + " para la pregunta: " + textoPregunta);
+                    throw e;
+                }
+
+                // Crear y agregar la pregunta
+                preguntas.add(new Pregunta(textoPregunta, respuestas, respuestaCorrectaIndex));
+            }
+        } catch (IOException e) {
+            System.err.println("Error al leer el archivo: " + e.getMessage());
+        }
+        return preguntas;
     }
 }
